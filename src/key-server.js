@@ -78,7 +78,7 @@ keyServer.inflatExpressApp = function (app) {
 
     const workspaceIdTokenFilter = (getValidateWorkspaceIdFunc) => {
         return async(req) => {
-            let validateWorkspaceId = getValidateWorkspaceIdFunc ? getValidateWorkspaceIdFunc(req) : null;
+            let validateWorkspaceId = getValidateWorkspaceIdFunc ? await getValidateWorkspaceIdFunc(req) : null;
             try {
                 let idKey = req.header('id-key');
                 let keyDecoded = jwt.verify(idKey, keyServer._publicKey, {
@@ -88,10 +88,10 @@ keyServer.inflatExpressApp = function (app) {
                     (validateWorkspaceId === null || keyDecoded['sub'] === validateWorkspaceId)) {
 
                     let keyCacheResult = idKeyCache.get(idKey);
-                    if (keyCacheResult){
-                        if (!keyCacheResult.v){
+                    if (keyCacheResult) {
+                        if (!keyCacheResult.v) {
                             return Promise.resolve(false);
-                        } else if (Date.now() - keyCacheResult.t <= gatewayConfig['id-key-cache-max-second'] * 1000){
+                        } else if (Date.now() - keyCacheResult.t <= gatewayConfig['id-key-cache-max-second'] * 1000) {
                             return Promise.resolve(true);
                         }
                     } else if (await keysDataStoreHolder.getDataStore().checkIdKeyExist({ key: idKey })) {
@@ -106,7 +106,7 @@ keyServer.inflatExpressApp = function (app) {
 
     const appIdTokenFilter = (getValidateAppIdFunc) => {
         return async(req) => {
-            let validateAppId = getValidateAppIdFunc ? getValidateAppIdFunc(req) : null;
+            let validateAppId = getValidateAppIdFunc ? await getValidateAppIdFunc(req) : null;
             try {
                 let idKey = req.header('id-key');
                 let keyDecoded = jwt.verify(idKey, keyServer._publicKey, {
@@ -114,12 +114,12 @@ keyServer.inflatExpressApp = function (app) {
                 });
                 if (keyDecoded != null && keyDecoded['token-type'] === 'identity' && keyDecoded['sub-type'] === 'app' &&
                     (validateAppId === null || keyDecoded['sub'] === validateAppId)) {
-                    
+
                     let keyCacheResult = idKeyCache.get(idKey);
-                    if (keyCacheResult){
-                        if (!keyCacheResult.v){
+                    if (keyCacheResult) {
+                        if (!keyCacheResult.v) {
                             return Promise.resolve(false);
-                        } else if (Date.now() - keyCacheResult.t <= gatewayConfig['id-key-cache-max-second'] * 1000){
+                        } else if (Date.now() - keyCacheResult.t <= gatewayConfig['id-key-cache-max-second'] * 1000) {
                             return Promise.resolve(true);
                         }
                     } else if (await keysDataStoreHolder.getDataStore().checkIdKeyExist({ key: idKey })) {
@@ -145,7 +145,18 @@ keyServer.inflatExpressApp = function (app) {
         return keysController.verifyIdKey(keyServer._config, keyServer._publicKey, req, res);
     });
 
-    app.post('/keys/api-key', orPermisionFilter(adminTokenFilter), (req, res) => {
+    app.post('/keys/api-key', orPermisionFilter(
+        adminTokenFilter,
+        workspaceIdTokenFilter(async (req) => {
+            let config = apiConfigHolder.get();
+            if (config.apps[req.body.appId]){
+                return Promise.resolve(config.apps[req.body.appId].workspaceId);
+            } else {
+                return Promise.resolve(undefined);
+            }
+        }),
+        appIdTokenFilter(async (req) => Promise.resolve(req.body.appId))
+    ), (req, res) => {
         return keysController.generateApiKey(keyServer._privateKey, keyServer._publicKey, req, res);
     });
 
@@ -161,22 +172,22 @@ keyServer.run = async function (port) {
     }
 
     port = port || this._config['port'] || 3002;
-    
+
     const privateKeyContent = fs.readFileSync(this._config['private-key-path'], 'utf8');
     this._privateKey = privateKeyContent;
-	const publicKeyContent = fs.readFileSync(this._config['public-key-path'], 'utf8');
+    const publicKeyContent = fs.readFileSync(this._config['public-key-path'], 'utf8');
     this._publicKey = publicKeyContent;
 
     await apiConfigHolder.pullConfig(this._config);
     setInterval(apiConfigHolder.pullConfig, this._config['pull-api-config-interval-second'] * 1000, this._config);
 
-    return new Promise(resolve=>{
+    return new Promise(resolve => {
         this._app.listen(port, function () {
             console.log(`Config server started with port ${port}`);
             resolve();
         });
     });
-    
+
 }.bind(keyServer);
 
 module.exports = keyServer;
