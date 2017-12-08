@@ -183,7 +183,7 @@ keyServer.run = async function (port) {
 
     return new Promise(resolve => {
         this._app.listen(port, function () {
-            console.log(`Config server started with port ${port}`);
+            console.log(`Key server started with port ${port}`);
             resolve();
         });
     });

@@ -1,6 +1,6 @@
 {
   "name": "airic-api-gateway-key-server",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "API Gateway Key Server",
   "author": "Eric Yu",
   "email": "airic.yu@gmail.com",
