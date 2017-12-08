@@ -9,7 +9,7 @@ const configSource = {
 };
 
 configSource.pull = async function (keyServerConfig) {
-    let configUrl = `${keyServerConfig['config-server-base-url']}/config/export`;
+    let configUrl = `${keyServerConfig['config-server-base-url']}/config/exportWithSecret`;
     return new Promise((resolve, reject) => {
         request(configUrl, {
                 json: true,

@@ -34,6 +34,18 @@ apiConfigHolder.pullConfig = async function (keyServerConfig) {
     }
     
     if (newConfig){
+        newConfig.apps = newConfig.apps || {};
+        newConfig.clients = newConfig.clients || {};
+        for(let [workspaceId, workspace] of Object.entries(newConfig.workspaces)){
+            for(let [appId, app] of Object.entries(workspace.apps)){
+                newConfig.apps = newConfig.apps || {};
+                newConfig.apps[appId] = newConfig.apps[appId] || app;
+            }
+            for(let [clientId, client] of Object.entries(workspace.clients)){
+                newConfig.clients = newConfig.clients || {};
+                newConfig.clients[clientId] = newConfig.clients[clientId] || client;
+            }
+        }
         this.config.workspaces = newConfig.workspaces;
         this.config.apps = newConfig.apps;
         this.config.clients = newConfig.clients;
