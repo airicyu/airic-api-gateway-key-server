@@ -52,35 +52,57 @@ public-key-path : './system-key-dir/public-key.pem'
 
 ## REST APIs
 
-### Generate Workspace ID key
+### Generate Workspace ID key (with admin token)
 ```
-POST http://localhost:3002/keys/id-key
+POST http://localhost:3001/config/workspaces/{{workspaceId}}/id-keys
+Content-type: application/json
+id-key: {{adminToken}}
+
+```
+
+### Generate Workspace ID key (with workspace ID/secret)
+```
+POST http://localhost:3001/config/workspaces/{{workspaceId}}/id-keys
 Content-type: application/json
 id-key: {{adminToken}}
 
 {
-    "subjectType": "workspace",
-    "workspaceId": "6ba955dde3044b6687af7b4d05a64920",
-    "secret": "c376f991c6744cfea1ccdad23356ab10"
+    "workspaceId": "{{workspaceId}}",
+    "secret": "{{workspaceSecret}}"
 }
 ```
 
-### Generate App ID key
+### Generate App ID key (with admin token)
 ```
-POST http://localhost:3002/keys/id-key
+POST http://localhost:3001/config/workspaces/{{workspaceId}}/apps/{{appId}}/id-keys
+Content-type: application/json
+id-key: {{adminToken}}
+
+```
+
+### Generate App ID key (with workspace ID key)
+```
+POST http://localhost:3001/config/workspaces/{{workspaceId}}/apps/{{appId}}/id-keys
+Content-type: application/json
+id-key: {{workspaceIdKey}}
+
+```
+
+### Generate App ID key (with app ID/secret)
+```
+POST http://localhost:3001/config/workspaces/{{workspaceId}}/apps/{{appId}}/id-keys
 Content-type: application/json
 id-key: {{adminToken}}
 
 {
-    "subjectType": "app",
-    "appId": "b84cdbefe8ab42d38df0aa415030c4a1",
-    "secret": "fd39eb34e94d41008cc0e196fdc5fc17"
+    "appId": "{{appId}}",
+    "secret": "{{appSecret}}"
 }
 ```
 
 ### Verify Workspace ID key or App ID key
 ```
-POST http://localhost:3002/keys/id-key/verification
+POST http://localhost:3001/keys/id-keys/verification
 Content-type: application/json
 
 {
@@ -89,7 +111,7 @@ Content-type: application/json
 ```
 
 ```
-POST http://localhost:3002/keys/id-key/verification
+POST http://localhost:3001/keys/id-keys/verification
 Content-type: application/json
 
 {
@@ -99,20 +121,18 @@ Content-type: application/json
 
 ### Register App API key for Client
 ```
-POST http://localhost:3002/keys/api-key
+POST http://localhost:3001/config/workspaces/{{workspaceId}}/apps/{{appId}}/api-keys
 Content-type: application/json
 id-key: {{adminToken}}
 
 {
-    "appId": "b84cdbefe8ab42d38df0aa415030c4a1",
-    "secret": "fd39eb34e94d41008cc0e196fdc5fc17",
-    "clientId": "4364938982b54da1807c599a955cdfcc"
+    "clientId": "{{clientId}}"
 }
 ```
 
 ### Verify API key
 ```
-POST http://localhost:3002/keys/api-key/verification
+POST http://localhost:3001/keys/api-keys/verification
 Content-type: application/json
 
 {
