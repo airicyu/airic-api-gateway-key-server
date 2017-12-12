@@ -94,14 +94,22 @@ const defaultKeyServiceImpl = {
         });
     },
     verifyIdKey: function (idKey, publicKey, req) {
-        return jwt.verify(idKey, publicKey, {
-            algorithm: 'RS256'
-        });
+        try {
+            return jwt.verify(idKey, publicKey, {
+                algorithm: 'RS256'
+            });
+        } catch (e) {
+            return false;
+        }
     },
     verifyApiKey: function (apiKey, publicKey, req) {
-        return jwt.verify(apiKey, publicKey, {
-            algorithm: 'RS256'
-        });
+        try {
+            return jwt.verify(apiKey, publicKey, {
+                algorithm: 'RS256'
+            });
+        } catch (e) {
+            return false;
+        }
     },
 }
 

@@ -21,6 +21,8 @@ const store = {
 };
 
 const dataStore = {
+    reset: null,
+
     saveIdKey: null,
     checkIdKeyExist: null,
     deleteIdKey: null,
@@ -29,6 +31,11 @@ const dataStore = {
     checkApiKeyExist: null,
     deleteApiKey: null
 }
+
+dataStore.reset = function(){
+    store.idKeys = {};
+    store.apiKeys = {};
+}.bind(dataStore);
 
 dataStore.saveIdKey = async function ({key, workspaceId, subjectType, subject}) {
     let existingPrimaryKey = null;

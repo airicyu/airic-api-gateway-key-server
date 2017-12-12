@@ -9,12 +9,24 @@ const apiKeyCache = require('./../key/key-cache').apiKeyCache;
 const idKeyCache = require('./../key/key-cache').idKeyCache;
 
 const generateWorkspaceIdKey = async(privateKey, publicKey, req, res) => {
-    let workspaceId = req.body.workspaceId;
-    let workspaceSecret = req.body.secret;
+    let workspaceId = req.params.workspaceId;
+
+    let auth = false;
+    let reqAuth = req.user && req.user.auth || {};
+    if (reqAuth['admin']){
+        auth = true;
+    } else if (reqAuth['workspace'] && reqAuth['workspace'][workspaceId]){
+        auth = true;
+    }
+    
+    if (!auth) {
+        return res.sendStatus(401);
+    }
+
     let state = req.body.state || null;
     if (state != null) {
         state = state.toString();
-        if (state.length > 50){
+        if (state.length > 50) {
             state = state.sub(0, 50);
         }
     }
@@ -22,10 +34,7 @@ const generateWorkspaceIdKey = async(privateKey, publicKey, req, res) => {
     try {
         let workspace = apiConfigHolder.get().workspaces[workspaceId];
         if (!workspace) {
-            return res.sendStatus(400);
-        }
-        if (workspace.secret !== workspaceSecret) {
-            return res.sendStatus(401);
+            return res.sendStatus(404);
         }
 
         let key = keyServiceHolder.getKeyService().generateWorkspaceKey(privateKey, publicKey, workspace, state, req);
@@ -45,23 +54,36 @@ const generateWorkspaceIdKey = async(privateKey, publicKey, req, res) => {
 }
 
 const generateAppIdKey = async(privateKey, publicKey, req, res) => {
-    let appId = req.body.appId;
-    let appSecret = req.body.secret;
+    let workspaceId = req.params.workspaceId;
+    let appId = req.params.appId;
+
+    let auth = false;
+    let reqAuth = req.user && req.user.auth || {};
+    if (reqAuth['admin']){
+        auth = true;
+    } else if (reqAuth['workspace'] && reqAuth['workspace'][workspaceId]){
+        auth = true;
+    } else if (reqAuth['app'][appId]){
+        auth = true;
+    }
+
+    if (!auth) {
+        return res.sendStatus(401);
+    }
+
+    
     let state = req.body.state || null;
     if (state != null) {
         state = state.toString();
-        if (state.length > 50){
+        if (state.length > 50) {
             state = state.sub(0, 50);
         }
     }
 
     try {
         let app = apiConfigHolder.get().apps[appId];
-        if (!app) {
-            return res.sendStatus(400);
-        }
-        if (app.secret !== appSecret) {
-            return res.sendStatus(401);
+        if (!app || app.workspaceId !== req.params.workspaceId) {
+            return res.sendStatus(404);
         }
 
         let key = keyServiceHolder.getKeyService().generateAppKey(privateKey, publicKey, app, state, req);
@@ -82,6 +104,13 @@ const generateAppIdKey = async(privateKey, publicKey, req, res) => {
 
 const verifyIdKey = async(config, publicKey, req, res) => {
     let idKey = req.body.key;
+    if (!idKey) {
+        return res.send({
+            result: false,
+            code: 400,
+            message: 'Invalid key'
+        });
+    }
 
     try {
         let keyDecoded = keyServiceHolder.getKeyService().verifyIdKey(idKey, publicKey, req);
@@ -136,9 +165,8 @@ const verifyIdKey = async(config, publicKey, req, res) => {
 }
 
 const generateApiKey = async(privateKey, publicKey, req, res) => {
-    let appId = req.body.appId;
-    let appSecret = req.body.secret;
-    let clientId = req.body.clientId;
+    let workspaceId = req.params.workspaceId;
+    let appId = req.params.appId;
     let state = req.body.state || null;
     if (state != null) {
         state = state.toString();
@@ -147,14 +175,30 @@ const generateApiKey = async(privateKey, publicKey, req, res) => {
         }
     }
 
+    let auth = false;
+    let reqAuth = req.user && req.user.auth || {};
+    if (reqAuth['admin']){
+        auth = true;
+    } else if (reqAuth['workspace'] && reqAuth['workspace'][workspaceId]){
+        auth = true;
+    } else if (reqAuth['app'][appId]){
+        auth = true;
+    }
+
+    if (!auth) {
+        return res.sendStatus(401);
+    }
+
     try {
         let app = apiConfigHolder.get().apps[appId];
         let client = apiConfigHolder.get().clients[clientId];
-        if (!app || !client || app.workspaceId !== client.workspaceId) {
-            return res.sendStatus(400);
+
+        if (!app || app.workspaceId !== req.params.workspaceId) {
+            return res.sendStatus(404);
         }
-        if (app.secret !== appSecret) {
-            return res.sendStatus(401);
+
+        if (!app || app.workspaceId !== req.params.workspaceId || !client || client.workspaceId !== req.params.workspaceId) {
+            return res.sendStatus(400);
         }
 
         let key = keyServiceHolder.getKeyService().generateClientAppApiKey(privateKey, publicKey, client, app, state, req);

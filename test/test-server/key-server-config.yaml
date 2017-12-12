@@ -1,0 +1,8 @@
+port: 3002
+admin-token: d8745e9d03be41ad817a47176ade4dcc
+pull-api-config-interval-second: 60
+config-server-base-url: http://localhost:3001
+id-key-cache-max-second: 15
+api-key-cache-max-second: 10
+private-key-path : './test/test-server/system-key-dir/private-key.pem'
+public-key-path : './test/test-server/system-key-dir/public-key.pem'
